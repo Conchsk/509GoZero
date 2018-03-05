@@ -6,7 +6,7 @@
 </head>
 <body>
   <div style="text-align: center">
-    <canvas id="myCanvas" onmouseup="move(event)"></canvas>
+    <canvas id="myCanvas" onmouseup="move2(event)"></canvas>
     <br />
     <button onclick="pass()">Pass</button>
     <button onclick="resign()">Resign</button>
@@ -16,6 +16,8 @@
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
   <script src="https://cdn.bootcss.com/socket.io/2.0.4/socket.io.js"></script>
   <script type="text/javascript">
+      var socket = io('ws://127.0.0.1:5000');
+
       var gapWidth = 60;
       var boardSize = 9;
       var board = [];
@@ -26,11 +28,11 @@
       function init() {
         canvas.width = (boardSize + 1) * gapWidth;
         canvas.height = (boardSize + 1) * gapWidth;
-        update_board();
+        updateBoard();
       }
       init();
 
-      function update_board() {
+      function updateBoard() {
         // board background color 棋盘背景色
         cxt.fillStyle = "#a48a6f";
         cxt.fillRect(0, 0, (boardSize + 1) * gapWidth, (boardSize + 1) * gapWidth);
@@ -48,8 +50,8 @@
         }
 
         // stones 棋子
-        for (row = 0; row < boardSize; ++row)
-          for (col = 0; col < boardSize; ++col) {
+        for (row = 0; row < board.length; ++row)
+          for (col = 0; col < board[0].length; ++col) {
             if (board[row][col] == 1) {
               cxt.beginPath();
               cxt.arc((col + 1) * gapWidth, (row + 1) * gapWidth, gapWidth * 0.45, 0, 360);
@@ -74,16 +76,27 @@
         $.post('http://127.0.0.1:5000/move', {'row': row, 'col': col},
           function(data) {
             board = JSON.parse(data);
-            update_board();
+            updateBoard();
           }
         );
       }
+
+      function move2(e) {
+        row = parseInt((e.clientY - canvas.getBoundingClientRect().top - 0.5 * gapWidth) / gapWidth);
+        col = parseInt((e.clientX - canvas.getBoundingClientRect().left - 0.5 * gapWidth) / gapWidth);
+        socket.emit('move2', {'row': row, 'col': col})
+      }
+
+      socket.on('move2', function(data){
+        board = JSON.parse(data)
+        updateBoard()
+      });
 
       function pass() {
         $.post('http://127.0.0.1:5000/move', {'row': boardSize, 'col': boardSize},
           function(data) {
             board = JSON.parse(data);
-            update_board();
+            updateBoard();
           }
         );
       }
@@ -92,7 +105,7 @@
         $.post('http://127.0.0.1:5000/resign',
           function(data) {
             board = JSON.parse(data);
-            update_board();
+            updateBoard();
           }
         );
       }
@@ -101,7 +114,7 @@
         $.post('http://127.0.0.1:5000/judge',
           function(data) {
             board = JSON.parse(data);
-            update_board();
+            updateBoard();
           }
         );
       }
