@@ -18,8 +18,8 @@
   <script type="text/javascript">
       var socket = io('ws://127.0.0.1:5000');
 
-      var gapWidth = 60;
-      var boardSize = 9;
+      var gapWidth = 33;
+      var boardSize = 19;
       var board = [];
 
       var canvas = $("#myCanvas")[0];
@@ -69,18 +69,6 @@
           }
       }
 
-      function move(e) {
-        row = parseInt((e.clientY - canvas.getBoundingClientRect().top - 0.5 * gapWidth) / gapWidth);
-        col = parseInt((e.clientX - canvas.getBoundingClientRect().left - 0.5 * gapWidth) / gapWidth);
-
-        $.post('http://127.0.0.1:5000/move', {'row': row, 'col': col},
-          function(data) {
-            board = JSON.parse(data);
-            updateBoard();
-          }
-        );
-      }
-
       function move2(e) {
         row = parseInt((e.clientY - canvas.getBoundingClientRect().top - 0.5 * gapWidth) / gapWidth);
         col = parseInt((e.clientX - canvas.getBoundingClientRect().left - 0.5 * gapWidth) / gapWidth);
@@ -93,12 +81,7 @@
       });
 
       function pass() {
-        $.post('http://127.0.0.1:5000/move', {'row': boardSize, 'col': boardSize},
-          function(data) {
-            board = JSON.parse(data);
-            updateBoard();
-          }
-        );
+        socket.emit('move2', {'row': boardSize, 'col': boardSize})
       }
 
       function resign() {

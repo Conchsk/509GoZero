@@ -19,7 +19,6 @@ class GoRule:
                     index = 0
                     while index < len(conn_comp):
                         (cur_row, cur_col) = conn_comp[index]
-                        visit_label[cur_row, cur_col] = 1
                         for (offset_row, offset_col) in search_dirs:
                             tmp_row = cur_row + offset_row
                             tmp_col = cur_col + offset_col
@@ -32,6 +31,7 @@ class GoRule:
                                     pass
                                 elif tmp_board[tmp_row, tmp_col] == -1:
                                     conn_comp.append((tmp_row, tmp_col))
+                                    visit_label[cur_row, cur_col] = 1
                                 else:
                                     dead_flag = False
                         index += 1
@@ -49,7 +49,6 @@ class GoRule:
                     index = 0
                     while index < len(conn_comp):
                         (cur_row, cur_col) = conn_comp[index]
-                        visit_label[cur_row, cur_col] = 1
                         for (offset_row, offset_col) in search_dirs:
                             tmp_row = cur_row + offset_row
                             tmp_col = cur_col + offset_col
@@ -60,6 +59,7 @@ class GoRule:
                             else:
                                 if tmp_board[tmp_row, tmp_col] == 1:
                                     conn_comp.append((tmp_row, tmp_col))
+                                    visit_label[cur_row, cur_col] = 1
                                 elif tmp_board[tmp_row, tmp_col] == -1:
                                     pass
                                 else:
@@ -103,7 +103,17 @@ class GoRule:
             if (Xtp1_board == boards[:, :, 2 * i]).all() and (Ytp1_board == boards[:, :, 2 * i + 1]).all():
                 return None
 
-        return Xtp1_board, Ytp1_board
+        # legal move return new state
+        new_boards = [Ytp1_board, Xtp1_board]
+        for i in range(7):
+            new_boards.append(boards[:, :, 2 * i + 1])
+            new_boards.append(boards[:, :, 2 * i])
+        if boards[0, 0, 16] == 1:
+            new_boards.append(np.zeros((self.board_size, self.board_size), dtype=int))
+        else:
+            new_boards.append(np.ones((self.board_size, self.board_size), dtype=int))
+
+        return np.array(new_boards).transpose((1, 2, 0))
 
     def judge(self, boards):
         # tmp_board represent current state (1 for black, 0 for empty, -1 for white)
@@ -126,7 +136,6 @@ class GoRule:
                     index = 0
                     while index < len(conn_comp):
                         (cur_row, cur_col) = conn_comp[index]
-                        visit_label[cur_row, cur_col] = 1
                         for (offset_row, offset_col) in search_dirs:
                             tmp_row = cur_row + offset_row
                             tmp_col = cur_col + offset_col
@@ -141,6 +150,7 @@ class GoRule:
                                     white_flag = True
                                 else:
                                     conn_comp.append((tmp_row, tmp_col))
+                                    visit_label[tmp_row, tmp_col] = 1
                         index += 1
                     if black_flag and not white_flag:
                         for (it_row, it_col) in conn_comp:

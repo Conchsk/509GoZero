@@ -23,9 +23,9 @@ class ResNet:
         self.policy_predict = self._policy_head(res_net_tower)
         self.value_predict = self._value_head(res_net_tower)
 
-        self.loss = tf.reduce_mean(
-            tf.square(self.value - self.value_predict) - self.policy * tf.log(self.policy_predict))
-        self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
+        # self.loss = tf.reduce_mean(
+        #     tf.square(self.value - self.value_predict) - self.policy * tf.log(self.policy_predict))
+        # self.train_step = tf.train.AdamOptimizer().minimize(self.loss)
 
         self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
