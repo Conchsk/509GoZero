@@ -8,7 +8,7 @@
   <div style="text-align: center">
     <canvas id="myCanvas" onmouseup="move2(event)"></canvas>
     <br />
-    <button onclick="pass()">Pass</button>
+    <button onclick="pass2()">Pass</button>
     <button onclick="resign()">Resign</button>
     <button onclick="judge()">Judge</button>
   </div>
@@ -69,6 +69,21 @@
           }
       }
 
+      function move1(e) {
+        row = parseInt((e.clientY - canvas.getBoundingClientRect().top - 0.5 * gapWidth) / gapWidth);
+        col = parseInt((e.clientX - canvas.getBoundingClientRect().left - 0.5 * gapWidth) / gapWidth);
+        socket.emit('move1', {'row': row, 'col': col})
+      }
+
+      socket.on('move1', function(data){
+        board = JSON.parse(data)
+        updateBoard()
+      });
+
+      function pass1() {
+        socket.emit('move1', {'row': boardSize, 'col': boardSize})
+      }
+
       function move2(e) {
         row = parseInt((e.clientY - canvas.getBoundingClientRect().top - 0.5 * gapWidth) / gapWidth);
         col = parseInt((e.clientX - canvas.getBoundingClientRect().left - 0.5 * gapWidth) / gapWidth);
@@ -80,7 +95,7 @@
         updateBoard()
       });
 
-      function pass() {
+      function pass2() {
         socket.emit('move2', {'row': boardSize, 'col': boardSize})
       }
 

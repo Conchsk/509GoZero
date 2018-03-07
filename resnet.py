@@ -44,7 +44,8 @@ class ResNet:
         conv = tf.layers.batch_normalization(conv)
         conv = tf.nn.relu(conv)
         conv_flat = tf.reshape(conv, shape=[-1, self.board_size * self.board_size * 2])
-        policy_predict = tf.layers.dense(conv_flat, self.board_size * self.board_size + 1)
+        fc = tf.layers.dense(conv_flat, self.board_size * self.board_size + 1)
+        policy_predict = tf.nn.softmax(fc)
         return policy_predict
 
     def _value_head(self, input_tensor):

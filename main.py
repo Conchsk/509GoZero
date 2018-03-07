@@ -4,7 +4,7 @@ import json
 import numpy as np
 
 from gorule import GoRule
-from resnet import ResNet
+from mcts import MCTS
 
 from flask import Flask, request, send_file
 from flask_socketio import SocketIO, emit
@@ -14,11 +14,12 @@ app.config['SECRET_KEY'] = 'secret!'
 io = SocketIO(app)
 
 board_size = 19
-go_rule = GoRule(board_size)
-res_net = ResNet(board_size)
-
 boards = np.zeros((board_size, board_size, 17), dtype=int)
 boards[:, :, 16] = np.ones((board_size, board_size))
+
+go_rule = GoRule(board_size)
+mcts = MCTS(boards)
+global_step = 1
 
 
 def _current_board():
@@ -41,6 +42,7 @@ def judge():
 def resign():
     global boards
     boards = np.zeros((board_size, board_size, 17), dtype=int)
+    boards[:, :, 16] = np.ones((board_size, board_size))
     return json.dumps(_current_board().tolist())
 
 
@@ -49,9 +51,25 @@ def send_html(page_name):
     return send_file(f'{page_name}.html')
 
 
+@io.on('move1')
+def move1(message):
+    global boards
+    global global_step
+
+    row = message['row']
+    col = message['col']
+
+    new_boards = go_rule.move(boards, row * board_size + col)
+    if new_boards is not None:
+        boards = new_boards
+        global_step += 1
+        emit('move2', json.dumps(_current_board().tolist()))
+
+
 @io.on('move2')
 def move2(message):
     global boards
+    global global_step
 
     row = message['row']
     col = message['col']
@@ -60,20 +78,16 @@ def move2(message):
     new_boards = go_rule.move(boards, row * board_size + col)
     if new_boards is not None:
         boards = new_boards
+        global_step += 1
         emit('move2', json.dumps(_current_board().tolist()))
 
         # ai go
-        policy, value = res_net.predict([boards])
-        policy_dist = policy[0, :]
-        while True:
-            index = np.where(policy_dist == policy_dist.max())[0]
-            new_boards = go_rule.move(boards, index)
-            if new_boards is not None:
-                boards = new_boards
-                emit('move2', json.dumps(_current_board().tolist()))
-                break
-            else:
-                policy_dist[index] = 0.0
+        mcts.manual_move(row * board_size + col)
+        ai_pos = mcts.best_move(global_step)
+        new_boards = go_rule.move(boards, ai_pos)
+        boards = new_boards
+        global_step += 1
+        emit('move2', json.dumps(_current_board().tolist()))
 
 
 if __name__ == '__main__':

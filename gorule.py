@@ -31,7 +31,7 @@ class GoRule:
                                     pass
                                 elif tmp_board[tmp_row, tmp_col] == -1:
                                     conn_comp.append((tmp_row, tmp_col))
-                                    visit_label[cur_row, cur_col] = 1
+                                    visit_label[tmp_row, tmp_col] = 1
                                 else:
                                     dead_flag = False
                         index += 1
@@ -59,7 +59,7 @@ class GoRule:
                             else:
                                 if tmp_board[tmp_row, tmp_col] == 1:
                                     conn_comp.append((tmp_row, tmp_col))
-                                    visit_label[cur_row, cur_col] = 1
+                                    visit_label[tmp_row, tmp_col] = 1
                                 elif tmp_board[tmp_row, tmp_col] == -1:
                                     pass
                                 else:
@@ -70,38 +70,39 @@ class GoRule:
                             tmp_board[it_row, it_col] = 0
 
     def move(self, boards, pos):
-        # pass move
-        if pos >= self.board_size * self.board_size:
-            return boards[:, :, 0], boards[:, :, 1]
+        if pos >= self.board_size * self.board_size:  # pass move
+            print('pass')
+            Ytp1_board = boards[:, :, 1].copy()
+            Xtp1_board = boards[:, :, 0].copy()
+        else:
+            # illegal move
+            row = pos // self.board_size
+            col = pos % self.board_size
+            print(f'{row}, {col}')
 
-        # illegal move
-        row = pos // self.board_size
-        col = pos % self.board_size
-        print(f'{row}, {col}')
-
-        # already has a tone
-        if boards[row, col, 0] == 1 or boards[row, col, 1] == 1:
-            return None
-
-        # tmp_board represent current state (1 for current player, 0 for empty, -1 for opposite)
-        tmp_board = boards[:, :, 0].copy()
-        tmp_board -= boards[:, :, 1]
-        tmp_board[row, col] = 1
-        self._clean_dead(tmp_board)
-
-        Xtp1_board = np.zeros((self.board_size, self.board_size), dtype=int)
-        Ytp1_board = np.zeros((self.board_size, self.board_size), dtype=int)
-        for row in range(self.board_size):
-            for col in range(self.board_size):
-                if tmp_board[row, col] == 1:
-                    Xtp1_board[row, col] = 1
-                elif tmp_board[row, col] == -1:
-                    Ytp1_board[row, col] = 1
-
-        # judge recurrent state
-        for i in range(8):
-            if (Xtp1_board == boards[:, :, 2 * i]).all() and (Ytp1_board == boards[:, :, 2 * i + 1]).all():
+            # already has a tone
+            if boards[row, col, 0] == 1 or boards[row, col, 1] == 1:
                 return None
+
+            # tmp_board represent current state (1 for current player, 0 for empty, -1 for opposite)
+            tmp_board = boards[:, :, 0].copy()
+            tmp_board -= boards[:, :, 1]
+            tmp_board[row, col] = 1
+            self._clean_dead(tmp_board)
+
+            Xtp1_board = np.zeros((self.board_size, self.board_size), dtype=int)
+            Ytp1_board = np.zeros((self.board_size, self.board_size), dtype=int)
+            for row in range(self.board_size):
+                for col in range(self.board_size):
+                    if tmp_board[row, col] == 1:
+                        Xtp1_board[row, col] = 1
+                    elif tmp_board[row, col] == -1:
+                        Ytp1_board[row, col] = 1
+
+            # judge recurrent state
+            for i in range(8):
+                if (Xtp1_board == boards[:, :, 2 * i]).all() and (Ytp1_board == boards[:, :, 2 * i + 1]).all():
+                    return None
 
         # legal move return new state
         new_boards = [Ytp1_board, Xtp1_board]
@@ -112,7 +113,6 @@ class GoRule:
             new_boards.append(np.zeros((self.board_size, self.board_size), dtype=int))
         else:
             new_boards.append(np.ones((self.board_size, self.board_size), dtype=int))
-
         return np.array(new_boards).transpose((1, 2, 0))
 
     def judge(self, boards):
